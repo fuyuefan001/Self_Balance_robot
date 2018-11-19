@@ -36,9 +36,15 @@ int main(void)
 	sendmsg("Finish init gyroscope",21);
     while(1){
     	GetAccGyro();
-    	sprintf(buf1,"%u",gyr1[0]);
-    	sprintf(buf2,"%u",gyr1[1]);
-    	sprintf(buf3,"%u",gyr1[2]);
+    	sprintf(buf1,"%d",acc1[0]);
+    	sprintf(buf2,"%d",acc1[1]);
+    	sprintf(buf3,"%d",acc1[2]);
+    	sendmsg(buf1,15);
+    	sendmsg(buf2,15);
+    	sendmsg(buf3,15);
+    	sprintf(buf1,"%d",gyr1[0]);
+    	sprintf(buf2,"%d",gyr1[1]);
+    	sprintf(buf3,"%d",gyr1[2]);
     	sendmsg(buf1,15);
     	sendmsg(buf2,15);
     	sendmsg(buf3,15);
@@ -46,7 +52,6 @@ int main(void)
     	writechar('\n');
 
     }
-//    echo();
-//    testbench();
+
     return 0;
 }

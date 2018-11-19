@@ -169,7 +169,7 @@ int8_t i2c_senddata(uint8_t devaddr, void *pdata, uint8_t size) {
     //i2c_start(devaddr, size, 0);
     I2C_GenerateSTART(I2C1, ENABLE);
     I2C_Send7bitAddress(I2C1,DEV_ADDR, !I2C_Direction_Transmitter);
-    I2C_SendData(I2C1,devaddr);
+    //I2C_SendData(I2C1,devaddr);
 //    i2c_clearnack() ;
 //    I2C_SendData(I2C1,devaddr);
     for(i=0; i<size; i++) {
@@ -201,7 +201,97 @@ int8_t i2c_senddata(uint8_t devaddr, void *pdata, uint8_t size) {
     i2c_stop();
     return 0;
 }
+void I2C_WrReg(uint8_t Reg, uint8_t Val){
 
+	//Wait until I2C isn't busy
+	while(I2C_GetFlagStatus(I2C1, I2C_FLAG_BUSY) == SET);
+
+	//"Handle" a transfer - The STM32F0 series has a shocking
+	//I2C interface... Regardless! Send the address of the HMC
+	//sensor down the I2C Bus and generate a start saying we're
+	//going to write one byte. I'll be completely honest,
+	//the I2C peripheral doesn't make too much sense to me
+	//and a lot of the code is from the Std peripheral library
+	I2C_TransferHandling(I2C1, DEV_ADDR, 1, I2C_Reload_Mode, I2C_Generate_Start_Write);
+
+	//Ensure the transmit interrupted flag is set
+	while(I2C_GetFlagStatus(I2C1, I2C_FLAG_TXIS) == RESET);
+
+	//Send the address of the register we wish to write to
+	I2C_SendData(I2C1, Reg);
+
+	//Ensure that the transfer complete reload flag is
+	//set, essentially a standard TC flag
+	while(I2C_GetFlagStatus(I2C1, I2C_FLAG_TCR) == RESET);
+
+	//Now that the HMC5883L knows which register
+	//we want to write to, send the address again
+	//and ensure the I2C peripheral doesn't add
+	//any start or stop conditions
+	I2C_TransferHandling(I2C1, DEV_ADDR, 1, I2C_AutoEnd_Mode, I2C_No_StartStop);
+
+	//Again, wait until the transmit interrupted flag is set
+	while(I2C_GetFlagStatus(I2C1, I2C_FLAG_TXIS) == RESET);
+
+	//Send the value you wish you write to the register
+	I2C_SendData(I2C1, Val);
+
+	//Wait for the stop flag to be set indicating
+	//a stop condition has been sent
+	while(I2C_GetFlagStatus(I2C1, I2C_FLAG_STOPF) == RESET);
+
+	//Clear the stop flag for the next potential transfer
+	I2C_ClearFlag(I2C1, I2C_FLAG_STOPF);
+}
+
+uint8_t I2C_RdReg(int8_t Reg, int8_t *Data, uint8_t DCnt){
+	int8_t Cnt, SingleData = 0;
+
+	//As per, ensure the I2C peripheral isn't busy!
+	while(I2C_GetFlagStatus(I2C1, I2C_FLAG_BUSY) == SET);
+
+	//Again, start another tranfer using the "transfer handling"
+	//function, the end bit being set in software this time
+	//round, generate a start condition and indicate you will
+	//be writing data to the HMC device.
+	I2C_TransferHandling(I2C1, DEV_ADDR, 1, I2C_SoftEnd_Mode, I2C_Generate_Start_Write);
+
+	//Wait until the transmit interrupt status is set
+	while(I2C_GetFlagStatus(I2C1, I2C_FLAG_TXIS) == RESET);
+
+	//Send the address of the register you wish to read
+	I2C_SendData(I2C1, (uint8_t)Reg);
+
+	//Wait until transfer is complete!
+	while(I2C_GetFlagStatus(I2C1, I2C_FLAG_TC) == RESET);
+
+	//As per, start another transfer, we want to read DCnt
+	//amount of bytes. Generate a start condition and
+	//indicate that we want to read.
+	I2C_TransferHandling(I2C1, DEV_ADDR, DCnt, I2C_AutoEnd_Mode, I2C_Generate_Start_Read);
+
+	//Read in DCnt pieces of data
+	for(Cnt = 0; Cnt<DCnt; Cnt++){
+        //Wait until the RX register is full of luscious data!
+        while(I2C_GetFlagStatus(I2C1, I2C_FLAG_RXNE) == RESET);
+        //If we're only reading one byte, place that data direct into the
+        //SingleData variable. If we're reading more than 1 piece of data
+        //store in the array "Data" (a pointer from main)
+        if(DCnt > 1) Data[Cnt] = I2C_ReceiveData(I2C1);
+	else SingleData = I2C_ReceiveData(I2C1);
+     }
+
+     //Wait for the stop condition to be sent
+     while(I2C_GetFlagStatus(I2C1, I2C_FLAG_STOPF) == RESET);
+
+     //Clear the stop flag for next transfers
+     I2C_ClearFlag(I2C1, I2C_FLAG_STOPF);
+
+     //Return a single piece of data if DCnt was
+     //less than 1, otherwise 0 will be returned.
+	return SingleData;
+
+}
 //===========================================================================
 // Receive multiple bytes from a target slave.
 int8_t i2c_recvdata(uint8_t devaddr, void *pdata, uint8_t size) {
@@ -239,33 +329,46 @@ int8_t i2c_recvdata(uint8_t devaddr, void *pdata, uint8_t size) {
 
 void MPU6050_Init(void)
 {
-	int8_t tmp[1];
-	int x=-1;
-	tmp[0]=0x00;
-
-	x=i2c_senddata(PWR_MGMT_1,tmp,1 );    //解除休眠状态
-	if(x==-1){sendmsg("timeout1",8);}else if(x==-2){sendmsg("nack1",5);}
-	tmp[0]=0x07;
-	x=i2c_senddata(SMPLRT_DIV, tmp,1);    //陀螺仪采样率，典型值：0x07(125Hz)
-	if(x==-1){sendmsg("timeout2",8);}else if(x==-2){sendmsg("nack2",5);}
-	tmp[0]=0x06;
-	x=i2c_senddata(CONFIG, tmp,1);        //低通滤波频率，典型值：0x06(5Hz)
-	if(x==-1){sendmsg("timeout3",8);}else if(x==-2){sendmsg("nack3",5);}
-	tmp[0]=0x18;
-	x=i2c_senddata(GYRO_CONFIG,tmp,1);   //陀螺仪自检及测量范围，典型值：0x18(不自检，2000deg/s)
-	if(x==-1){sendmsg("timeout4",8);}else if(x==-2){sendmsg("nack4",5);}
-	tmp[0]=0x01;
-	x=i2c_senddata(ACCEL_CONFIG, tmp,1);  //加速计自检、测量范围及高通滤波频率，典型值：0x01(不自检，2G，5Hz)
-	if(x==-1){sendmsg("timeout5",8);}else if(x==-2){sendmsg("nack5",5);}
+//	int8_t tmp[1];
+//	int x=-1;
+//	tmp[0]=0x00;
+	uint8_t reg;
+	uint8_t val;
+	reg=PWR_MGMT_1;val=0x00;
+	I2C_WrReg(reg,val);
+	reg=SMPLRT_DIV;val=0x07;
+	I2C_WrReg(reg,val);
+	reg=CONFIG;val=0x06;
+	I2C_WrReg(reg,val);
+	reg=GYRO_CONFIG;val=0x18;
+	I2C_WrReg(reg,val);
+	reg=ACCEL_CONFIG;val=0x01;
+	I2C_WrReg(reg,val);
+//	x=i2c_senddata(PWR_MGMT_1,tmp,1 );    //解除休眠状态
+//	if(x==-1){sendmsg("timeout1",8);}else if(x==-2){sendmsg("nack1",5);}
+//	tmp[0]=0x07;
+//	x=i2c_senddata(SMPLRT_DIV, tmp,1);    //陀螺仪采样率，典型值：0x07(125Hz)
+//	if(x==-1){sendmsg("timeout2",8);}else if(x==-2){sendmsg("nack2",5);}
+//	tmp[0]=0x06;
+//	x=i2c_senddata(CONFIG, tmp,1);        //低通滤波频率，典型值：0x06(5Hz)
+//	if(x==-1){sendmsg("timeout3",8);}else if(x==-2){sendmsg("nack3",5);}
+//	tmp[0]=0x18;
+//	x=i2c_senddata(GYRO_CONFIG,tmp,1);   //陀螺仪自检及测量范围，典型值：0x18(不自检，2000deg/s)
+//	if(x==-1){sendmsg("timeout4",8);}else if(x==-2){sendmsg("nack4",5);}
+//	tmp[0]=0x01;
+//	x=i2c_senddata(ACCEL_CONFIG, tmp,1);  //加速计自检、测量范围及高通滤波频率，典型值：0x01(不自检，2G，5Hz)
+//	if(x==-1){sendmsg("timeout5",8);}else if(x==-2){sendmsg("nack5",5);}
 }
 int16_t GetData(uint8_t regAddr)
 {
-    uint8_t Data_H, Data_L;
-    uint16_t data;
-    Data_H=i2c_recvdata(regAddr,&Data_H,1);
-    Data_L=i2c_recvdata(regAddr + 1,&Data_L,1);
-    data = (Data_H << 8) | Data_L;  // 合成数据
-    return data;
+//    uint8_t Data_H, Data_L;
+    int8_t data[2];
+    I2C_RdReg(regAddr, data, 2);
+//    I2C_RdReg(regAddr+1, &Data_L, 1);
+//    Data_H=i2c_recvdata(regAddr,&Data_H,1);
+//    Data_L=i2c_recvdata(regAddr + 1,&Data_L,1);
+//    data = (Data_H << 8) | Data_L;  // 合成数据
+    return (data[1])+((data[0])<<8);
 }
 
 void GetAccGyro(void)//读取6轴数据
