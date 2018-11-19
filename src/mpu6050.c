@@ -55,20 +55,39 @@ void I2C_config(void)
     I2C_InitStruct.I2C_DigitalFilter=0x00;
     I2C_InitStruct.I2C_Mode=I2C_Mode_I2C;
     I2C_InitStruct.I2C_OwnAddress1=0x00;
+    I2C_InitStruct.I2C_Timing=0x20400A8D;
     // From table 83. p642 of FRM.  Set for 400 kHz with 8MHz clock.
-    I2C1->TIMINGR = 0;
-    I2C1->TIMINGR &= ~I2C_TIMINGR_PRESC;// Clear prescaler
-    I2C1->TIMINGR |= 0 << 28;           // Set prescaler to 0
-    I2C1->TIMINGR |= 3 << 20;           // SCLDEL
-    I2C1->TIMINGR |= 1 << 16;           // SDADEL
-    I2C1->TIMINGR |= 3 << 8;            // SCLH
-    I2C1->TIMINGR |= 9 << 0;            // SCLL
+            // SCLL
     I2C_Init(I2C1,&I2C_InitStruct);
     I2C_Cmd(I2C1, ENABLE);
     I2C_AcknowledgeConfig(I2C1, ENABLE);
 
 }
+void I2C_Send7bitAddress(I2C_TypeDef* I2Cx, uint8_t Address, uint8_t I2C_Direction)
+{
+  /* Check the parameters */
+  assert_param(IS_I2C_ALL_PERIPH(I2Cx));
+  assert_param(IS_I2C_DIRECTION(I2C_Direction));
+  /* Test on the direction to set/reset the read/write bit */
+  if (I2C_Direction != I2C_Direction_Transmitter)
+  {
+	/* Shift the address one bit to the left */
+	Address = Address << 1;
+	/* Set the address bit0 for read */
+	Address |= 0b00000001;
+	I2Cx->TXDR = Address;
+  }
+  else
+  {
+	/* Shift the address one bit to the left */
+	Address = Address << 1;
+	/* Reset the address bit0 for write */
+	Address &= 0b11111110;
+	I2Cx->TXDR = Address;
+  }
+  /* Send the address */
 
+}
 
 int i2c_checknack(void) {
     if (I2C1->ISR & I2C_ISR_NACKF)
@@ -144,11 +163,13 @@ int8_t i2c_senddata(uint8_t devaddr, void *pdata, uint8_t size) {
     int i;
     if (size <= 0 || pdata == 0) return -1;
     int8_t *udata = (int8_t*)pdata;
-    I2C_SlaveAddressConfig( I2C1, SlaveAddress);
+//    I2C_SlaveAddressConfig( I2C1, SlaveAddress);
     i2c_waitidle();
     // Last argument is dir: 0 = sending data to the slave.
     //i2c_start(devaddr, size, 0);
     I2C_GenerateSTART(I2C1, ENABLE);
+    I2C_Send7bitAddress(I2C1,DEV_ADDR, !I2C_Direction_Transmitter);
+    I2C_SendData(I2C1,devaddr);
 //    i2c_clearnack() ;
 //    I2C_SendData(I2C1,devaddr);
     for(i=0; i<size; i++) {
@@ -187,10 +208,11 @@ int8_t i2c_recvdata(uint8_t devaddr, void *pdata, uint8_t size) {
     int i;
     if (size <= 0 || pdata == 0) return -1;
     int8_t *udata = (int8_t*)pdata;
-    I2C_SlaveAddressConfig( I2C1,SlaveAddress);
+//    I2C_SlaveAddressConfig( I2C1,SlaveAddress);
     //i2c_start(devaddr, size, 1); // 1 = receiving from the slave
     I2C_GenerateSTART(I2C1, ENABLE);
-
+    I2C_Send7bitAddress(I2C1,   DEV_ADDR,I2C_Direction_Transmitter );
+    I2C_SendData(I2C1,devaddr);
     for(i=0; i<size; i++) {
         // Wait until RXNE flag is set
         int count = 0;
