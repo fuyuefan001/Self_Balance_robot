@@ -13,7 +13,7 @@
 
 #include "miniproject.h"
 
-static void nano_wait(int t) {
+ void nano_wait(int t) {
     asm("       mov r0,%0\n"
         "repeat:\n"
         "       sub r0,#83\n"

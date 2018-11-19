@@ -21,7 +21,7 @@
 #define	GYRO_ZOUT_L	0x48
 #define	PWR_MGMT_1	0x6B	//电源管理，典型值：0x00(正常启用)
 #define	WHO_AM_I	0x75	//IIC地址寄存器(默认数值0x68，只读)
-#define	SlaveAddress	0xD0 	//MPU6050模块AD0引脚接低电平时的地址
+#define	SlaveAddress	0x68 	//MPU6050模块AD0引脚接低电平时的地址
 
 #include "miniproject.h"
 
@@ -38,6 +38,7 @@ void I2C_config(void)
     //初始化GPIO
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
     GPIO_InitStructure.GPIO_OType=GPIO_OType_OD;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOB, &GPIO_InitStructure);
@@ -65,6 +66,7 @@ void I2C_config(void)
     I2C_Init(I2C1,&I2C_InitStruct);
     I2C_Cmd(I2C1, ENABLE);
     I2C_AcknowledgeConfig(I2C1, ENABLE);
+
 }
 
 
@@ -138,14 +140,18 @@ void i2c_waitidle(void) {
 //   Software waits until TC is set.
 //   Hardware automatically clears TC flag when START bit or STOP bit in
 //   CR2 is set.
-int8_t i2c_senddata(uint8_t devaddr, uint8_t data) {
+int8_t i2c_senddata(uint8_t devaddr, void *pdata, uint8_t size) {
     int i;
-
+    if (size <= 0 || pdata == 0) return -1;
+    int8_t *udata = (int8_t*)pdata;
+    I2C_SlaveAddressConfig( I2C1, SlaveAddress);
     i2c_waitidle();
     // Last argument is dir: 0 = sending data to the slave.
-    i2c_start(devaddr, 1, 0);
-
-
+    //i2c_start(devaddr, size, 0);
+    I2C_GenerateSTART(I2C1, ENABLE);
+//    i2c_clearnack() ;
+//    I2C_SendData(I2C1,devaddr);
+    for(i=0; i<size; i++) {
         // TXIS bit is set by hardware when the TXDR register is empty and the
         // data to be transmitted must be written in the TXDR register.  It is
         // cleared when the next data to be sent is written in the TXDR reg.
@@ -163,8 +169,8 @@ int8_t i2c_senddata(uint8_t devaddr, uint8_t data) {
         }
 
         // TXIS is cleared by writing to the TXDR register.
-        I2C1->TXDR = data & I2C_TXDR_TXDATA;
-
+        I2C1->TXDR = udata[i] & I2C_TXDR_TXDATA;
+    }
 
     // Wait until TC flag is set or the NACK flag is set.
     while((I2C1->ISR & I2C_ISR_TC) == 0 && (I2C1->ISR & I2C_ISR_NACKF) == 0);
@@ -177,55 +183,65 @@ int8_t i2c_senddata(uint8_t devaddr, uint8_t data) {
 
 //===========================================================================
 // Receive multiple bytes from a target slave.
-int8_t i2c_recvdata(uint8_t devaddr) {
+int8_t i2c_recvdata(uint8_t devaddr, void *pdata, uint8_t size) {
     int i;
+    if (size <= 0 || pdata == 0) return -1;
+    int8_t *udata = (int8_t*)pdata;
+    I2C_SlaveAddressConfig( I2C1,SlaveAddress);
+    //i2c_start(devaddr, size, 1); // 1 = receiving from the slave
+    I2C_GenerateSTART(I2C1, ENABLE);
 
-    i2c_waitidle();
-    i2c_start(devaddr,1, 1); // 1 = receiving from the slave
-
-    // Wait until RXNE flag is set
-    int count = 0;
-    while ( (I2C1->ISR & I2C_ISR_RXNE) == 0) {
-        count += 1;
-        if (count > 1000000)
-            return -1;
-        if (i2c_checknack()) {
-            i2c_clearnack();
-            i2c_stop();
-            return -2;
+    for(i=0; i<size; i++) {
+        // Wait until RXNE flag is set
+        int count = 0;
+        while ( (I2C1->ISR & I2C_ISR_RXNE) == 0) {
+            count += 1;
+            if (count > 1000000)
+                return -1;
+            if (i2c_checknack()) {
+                i2c_clearnack();
+                i2c_stop();
+                return -2;
+            }
         }
+        udata[i] = I2C1->RXDR & I2C_RXDR_RXDATA;
     }
-    uint8_t data = I2C1->RXDR & I2C_RXDR_RXDATA;
-
 
     int x=0;
     while((I2C1->ISR & I2C_ISR_TC) == 0)
         x++;  // Wait until TCR flag is set
 
     i2c_stop();
-    return data;
+    return 0;
 }
 
 void MPU6050_Init(void)
 {
-	int x;
-	x=i2c_senddata(PWR_MGMT_1, 0x00);    //解除休眠状态
+	int8_t tmp[1];
+	int x=-1;
+	tmp[0]=0x00;
+
+	x=i2c_senddata(PWR_MGMT_1,tmp,1 );    //解除休眠状态
 	if(x==-1){sendmsg("timeout1",8);}else if(x==-2){sendmsg("nack1",5);}
-	x=i2c_senddata(SMPLRT_DIV, 0x07);    //陀螺仪采样率，典型值：0x07(125Hz)
+	tmp[0]=0x07;
+	x=i2c_senddata(SMPLRT_DIV, tmp,1);    //陀螺仪采样率，典型值：0x07(125Hz)
 	if(x==-1){sendmsg("timeout2",8);}else if(x==-2){sendmsg("nack2",5);}
-	x=i2c_senddata(CONFIG, 0x06);        //低通滤波频率，典型值：0x06(5Hz)
+	tmp[0]=0x06;
+	x=i2c_senddata(CONFIG, tmp,1);        //低通滤波频率，典型值：0x06(5Hz)
 	if(x==-1){sendmsg("timeout3",8);}else if(x==-2){sendmsg("nack3",5);}
-	x=i2c_senddata(GYRO_CONFIG, 0x18);   //陀螺仪自检及测量范围，典型值：0x18(不自检，2000deg/s)
+	tmp[0]=0x18;
+	x=i2c_senddata(GYRO_CONFIG,tmp,1);   //陀螺仪自检及测量范围，典型值：0x18(不自检，2000deg/s)
 	if(x==-1){sendmsg("timeout4",8);}else if(x==-2){sendmsg("nack4",5);}
-	x=i2c_senddata(ACCEL_CONFIG, 0x01);  //加速计自检、测量范围及高通滤波频率，典型值：0x01(不自检，2G，5Hz)
+	tmp[0]=0x01;
+	x=i2c_senddata(ACCEL_CONFIG, tmp,1);  //加速计自检、测量范围及高通滤波频率，典型值：0x01(不自检，2G，5Hz)
 	if(x==-1){sendmsg("timeout5",8);}else if(x==-2){sendmsg("nack5",5);}
 }
 int16_t GetData(uint8_t regAddr)
 {
     uint8_t Data_H, Data_L;
     uint16_t data;
-    Data_H=i2c_recvdata(regAddr);
-    Data_L=i2c_recvdata(regAddr + 1);
+    Data_H=i2c_recvdata(regAddr,&Data_H,1);
+    Data_L=i2c_recvdata(regAddr + 1,&Data_L,1);
     data = (Data_H << 8) | Data_L;  // 合成数据
     return data;
 }
@@ -239,3 +255,12 @@ void GetAccGyro(void)//读取6轴数据
     gyr1[1] = GetData(GYRO_YOUT_H);
     gyr1[2] = GetData(GYRO_ZOUT_H);
 }
+
+
+
+
+
+
+
+
+

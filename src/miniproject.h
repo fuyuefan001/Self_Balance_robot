@@ -7,7 +7,7 @@
 #include <string.h>
 #include <stdlib.h> // for strtoul()
 
-//function
+ void nano_wait(int t);
 void I2C_config(void);
 void init_usart2(void);
 void writechar(char );
@@ -16,7 +16,7 @@ void sendmsg(char*,int );
 int print(const char *);
 int println(const char *);
 int readln(void *, int );
-
+int i2c_checknack(void);
 
 
 //global variable
