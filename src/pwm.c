@@ -33,8 +33,8 @@ void tim1_init(void) {
 	GPIOA->AFR[1] |= 0x222;
 	RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
 	TIM1->CR1 &= ~TIM_CR1_DIR;
-	TIM1->PSC = 960-1;
-	TIM1->ARR=1000-1;
+	TIM1->PSC = 96-1;
+	TIM1->ARR=10000-1;
 //	TIM1->CCR1 =5000;
 //	TIM1->CCR2 =5000;
 //	TIM1->CCR3 =5000;
@@ -72,7 +72,7 @@ void tim1_init(void) {
 	TIM1->CR1 |= TIM_CR1_CEN;
 }
 /**
- * from 0 t0 10000
+ * from 0 t0 1000
  */
 
 void duty_cyc1(int num){

@@ -50,6 +50,6 @@ void TIM2_IRQHandler();
 void duty_cyc1(int);
 void duty_cyc2(int);
 void duty_cyc3(int);
-
+void kalman_filter(float, float , float *, float *);
 #endif
 

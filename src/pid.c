@@ -23,6 +23,12 @@ void ImuCalculate_Complementary(void)//计算角度
     angle[2] = angle_last[2]+gyr1[2]*dt;//yaw
     angle_last[2] = angle[2];
 }
+/**
+ * float angle_m 加速度计计算的角度，
+ * float gyro_m陀螺仪角速度，
+ * float *angle_f融合后的角度，
+ * float *angle_dot_f融合后的角速度
+ */
 
 void kalman_filter(float angle_m, float gyro_m, float *angle_f, float *angle_dot_f)
 {

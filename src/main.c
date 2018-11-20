@@ -28,16 +28,22 @@ int16_t acczero[3]={0};
 int16_t gyrzero[3]={-264,-263,3};
 
 const float fRad2Deg = 57.295779513f; //弧度换算角度乘的系数
-const float dt = 0.05; //时间周期
+const float dt = 0.005; //时间周期
 float angle[3] = {0,0,0};
-float R = 0.98f;
+float R = 0.2;
 int main(void)
 {
 //	init_pwm();
 	tim1_init();
-	duty_cyc1(100);
-	duty_cyc2(100);
-//	while(1) asm("wfi");
+	duty_cyc1(800);
+	duty_cyc2(900);
+	while(1);
+	power1=50;
+	power2=-50;
+//	scale to 50 ~100
+	duty_cyc1(power1/4+750);
+	duty_cyc2(power2/4+750);
+	while(1) asm("wfi");
 	char buf1[32]={0};
 	char buf2[20]={0};
 	char buf3[20]={0};
@@ -54,7 +60,8 @@ int main(void)
     	for(i=0;i<3;i++){
     		gyr1[i]-=gyrzero[i];
     	}
-    	//ImuCalculate_Complementary();
+    	ImuCalculate_Complementary();
+
     	//TODO:pid control
     	//calculate power for two motor
     	power1=50;
@@ -62,7 +69,7 @@ int main(void)
     	//scale to 50 ~100
     	duty_cyc1(power1/4+75);
     	duty_cyc2(power2/4+75);
-    	duty_cyc3(999);
+//    	duty_cyc3(999);
     	sprintf(buf1,"ACC: [%5f %5f %5f] m/s",acc1[0]/835.92,acc1[1]/835.92,acc1[2]/835.92);
 
     	println(buf1);
