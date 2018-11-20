@@ -37,13 +37,13 @@ int main(void)
 	tim1_init();
 	duty_cyc1(800);
 	duty_cyc2(900);
-	while(1);
+//	while(1);
 	power1=50;
 	power2=-50;
 //	scale to 50 ~100
 	duty_cyc1(power1/4+750);
 	duty_cyc2(power2/4+750);
-	while(1) asm("wfi");
+//	while(1) asm("wfi");
 	char buf1[32]={0};
 	char buf2[20]={0};
 	char buf3[20]={0};
@@ -78,7 +78,7 @@ int main(void)
 
     	println(buf1);
 
-    	sprintf(buf1,"GYO: [%5f %5f %5f] deg",angle[0],angle[1],angle[2]);
+    	sprintf(buf1,"ANG: [%5f %5f %5f] deg",angle[0],angle[1],angle[2]);
     	println(buf1);
     	//nano_wait(50000000);
     	writechar('\n');
