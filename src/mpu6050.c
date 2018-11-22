@@ -181,7 +181,7 @@ void MPU6050_Init(void)
 	I2C_WrReg(reg,val);
 	reg=CONFIG;val=0x06;
 	I2C_WrReg(reg,val);
-	reg=GYRO_CONFIG;val=0x18;
+	reg=GYRO_CONFIG;val=1<<3;
 	I2C_WrReg(reg,val);
 	reg=ACCEL_CONFIG;val=0x08;
 	I2C_WrReg(reg,val);
