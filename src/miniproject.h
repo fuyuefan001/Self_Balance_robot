@@ -28,6 +28,13 @@
 #define	GYRO_ZOUT_L	0x48
 #define	PWR_MGMT_1	0x6B	//电源管理，典型值：0x00(正常启用)
 #define	WHO_AM_I	0x75	//IIC地址寄存器(默认数值0x68，只读)
+
+#define DMP_BANK 0x6D
+#define DMP_RW_PNT 0x6E
+#define DMP_REG 0x6F
+#define DMP_REG_1 0x70
+#define DMP_REG_2 0x71
+
 #define	SlaveAddress	0x68 	//MPU6050模块AD0引脚接低电平时的地址
 
 

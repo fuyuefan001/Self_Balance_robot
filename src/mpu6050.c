@@ -5,6 +5,7 @@
 
 extern int16_t acc1[];
 extern int16_t gyr1[];
+extern int16_t dmp[];
 void I2C_config(void)
 {
     //定义结构体
@@ -21,6 +22,7 @@ void I2C_config(void)
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOB, &GPIO_InitStructure);
     /* Connect PXx to I2C_SCL*/
+//    GPIOC->AFR[0]|=
     GPIO_PinAFConfig( GPIOB , GPIO_PinSource6, GPIO_AF_1);
     /* Connect PXx to I2C_SDA*/
     GPIO_PinAFConfig( GPIOB ,GPIO_PinSource7, GPIO_AF_1);
@@ -192,12 +194,12 @@ int16_t GetData(uint8_t regAddr)
 	int a;
 	int sum=0;
 	int8_t data[2]={0,0};
-	for(a=0;a<8;a++){
+	//for(a=0;a<8;a++){
 
 		I2C_RdReg(regAddr, data, 2);
-		sum+=((data[0]<<8)+data[1]);
-	}
-	return (int16_t) (sum/8);
+		sum=((data[0]<<8)+data[1]);
+	//}
+	return (int16_t) (sum);
 }
 
 void GetAccGyro(void)//读取6轴数据
@@ -208,6 +210,10 @@ void GetAccGyro(void)//读取6轴数据
     gyr1[0] = GetData(GYRO_XOUT_H);
     gyr1[1] = GetData(GYRO_YOUT_H);
     gyr1[2] = GetData(GYRO_ZOUT_H);
+    dmp[0]=GetData(DMP_REG);
+    dmp[1]=GetData(DMP_REG_1);
+    dmp[2]=GetData(DMP_REG_2);
+
 }
 
 
