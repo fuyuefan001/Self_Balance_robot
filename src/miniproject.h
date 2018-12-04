@@ -34,6 +34,7 @@
 #define DMP_REG 0x6F
 #define DMP_REG_1 0x70
 #define DMP_REG_2 0x71
+#define DMP_REG_3 0x72
 
 #define	SlaveAddress	0x68 	//MPU6050模块AD0引脚接低电平时的地址
 

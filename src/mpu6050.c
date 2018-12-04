@@ -208,11 +208,11 @@ void GetAccGyro(void)//∂¡»°6÷· ˝æ›
     acc1[1] = GetData(ACCEL_YOUT_H);
     acc1[2] = GetData(ACCEL_ZOUT_H);
     gyr1[0] = GetData(GYRO_XOUT_H);
-    gyr1[1] = GetData(GYRO_YOUT_H);
-    gyr1[2] = GetData(GYRO_ZOUT_H);
-    dmp[0]=GetData(DMP_REG);
-    dmp[1]=GetData(DMP_REG_1);
-    dmp[2]=GetData(DMP_REG_2);
+//    gyr1[1] = GetData(GYRO_YOUT_H);
+//    gyr1[2] = GetData(GYRO_ZOUT_H);
+//    dmp[0]=GetData(DMP_REG);
+//    dmp[1]=GetData(DMP_REG_1);
+//    dmp[2]=GetData(DMP_REG_2);
 
 }
 

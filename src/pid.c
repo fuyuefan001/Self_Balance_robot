@@ -82,11 +82,11 @@ void kalman_filter(float angle_m, float gyro_m, float *angle_f, float *angle_dot
 }
 
 int powerscale(int power){
-	int ccr=700;
+	int ccr=4500;
 	if(power>0){
-		ccr=700+40+power;
+		ccr=4500+300+power;
 	}else if(power<0){
-		ccr=700-40+power;
+		ccr=4500-300+power;
 	}
 	return ccr;
 }
