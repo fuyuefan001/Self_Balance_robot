@@ -30,10 +30,10 @@ int16_t acczero[3]={0};
 int16_t gyrzero[3]={-264,-263,3};
 float ANG=0;
 float GYO=0;
-const float fRad2Deg = 57.295779513f; //弧度换算角度乘的系数
-const float dt = 0.005; //时间周期
+const float fRad2Deg = 57.295779513f; //禄隆露脠禄禄脣茫陆脟露脠鲁脣碌脛脧碌脢媒
+const float dt = 0.005; //脢卤录盲脰脺脝脷
 float angle[3] = {0,0,0};
-float R = 0.1    ;
+float R = 0.7    ;
 int speed;
 int main(void)
 {
@@ -60,20 +60,15 @@ int main(void)
 	p=30 ;
 	d=0;
 	int aaa=0;
+	float angle_last;
     while(1){
+    	angle_last=ANG;
     	GetAccGyro();
-    	int i;
-//    	ImuCalculate_Complementary();
-
-        float angle_last=ANG;
+    	gyr1[0]+=300;//闆剁偣鐭
         float temp=sqrt(acc1[1]*acc1[1]+acc1[2]*acc1[2]);
-
-        ANG = R*(angle_last+gyr1[0]*dt)
-                    + (1-R)*fRad2Deg*atan(acc1[0]/temp);
+        ANG = R*(angle_last+gyr1[0]*dt) + (1-R)*fRad2Deg*atan(acc1[0]/temp);
     	GYO=gyr1[0];
-
-
-    	power=p*(ANG-3)+d*(GYO+300);
+    	power=p*(ANG-3)+d*(GYO);
     	duty_cyc1(powerscale((int)power));
     	aaa++;
     	if(aaa%200==0){
