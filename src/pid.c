@@ -34,7 +34,7 @@ void kalman_filter(float angle_m, float gyro_m, float *angle_f, float *angle_dot
 {
     //------------------------------
     static float angle, angle_dot;
-    const float Q_angle = 0.000001, Q_gyro = 0.0001, R_angle = 0.5, dt = 0.002;
+    const float Q_angle = 0.01, Q_gyro = 0.05, R_angle = 0.5, dt = 0.01;
     static float P[2][2]={
                        { 1, 0 },
                        { 0, 1 }
@@ -84,9 +84,9 @@ void kalman_filter(float angle_m, float gyro_m, float *angle_f, float *angle_dot
 int powerscale(int power){
 	int ccr=4500;
 	if(power>0){
-		ccr=4500+300+power;
+		ccr=4500+150+power;
 	}else if(power<0){
-		ccr=4500-300+power;
+		ccr=4500-150+power;
 	}
 	return ccr;
 }

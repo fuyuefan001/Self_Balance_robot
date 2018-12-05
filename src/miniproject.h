@@ -6,6 +6,7 @@
 #include "stm32f0xx_i2c.h"
 #include <string.h>
 #include <stdlib.h> // for strtoul()
+#include <math.h>
 
 #define DEV_ADDR 0xD0 // 6050 器件地址
 #define	SMPLRT_DIV	0x19	//陀螺仪输出率的分频，典型值0x07,(1kHz)
@@ -34,7 +35,7 @@
 #define DMP_REG 0x6F
 #define DMP_REG_1 0x70
 #define DMP_REG_2 0x71
-#define DMP_REG_3 0x72
+
 
 #define	SlaveAddress	0x68 	//MPU6050模块AD0引脚接低电平时的地址
 
@@ -59,5 +60,8 @@ void duty_cyc1(int);
 void duty_cyc2(int);
 void duty_cyc3(int);
 void kalman_filter(float, float , float *, float *);
+void GetAccGyro(void);
+int powerscale(int);
+void MPU6050_Init(void);
 #endif
 
