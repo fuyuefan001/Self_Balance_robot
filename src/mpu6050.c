@@ -35,7 +35,8 @@ void I2C_config(void)
     I2C_InitStruct.I2C_DigitalFilter=0x00;
     I2C_InitStruct.I2C_Mode=I2C_Mode_I2C;
     I2C_InitStruct.I2C_OwnAddress1=0x00;
-    I2C_InitStruct.I2C_Timing=0x20400A8D;
+//    I2C_InitStruct.I2C_Timing=0x20400A8D;
+    I2C_InitStruct.I2C_Timing=0x00901D2B;
     // From table 83. p642 of FRM.  Set for 400 kHz with 8MHz clock.
             // SCLL
     I2C_Init(I2C1,&I2C_InitStruct);
@@ -207,7 +208,7 @@ void GetAccGyro(void)//∂¡»°6÷· ˝æ›
     acc1[0] = GetData(ACCEL_XOUT_H);
     acc1[1] = GetData(ACCEL_YOUT_H);
     acc1[2] = GetData(ACCEL_ZOUT_H);
-    gyr1[0] = GetData(GYRO_XOUT_H);
+    gyr1[0] = GetData(GYRO_YOUT_H);
 //    gyr1[1] = GetData(GYRO_YOUT_H);
 //    gyr1[2] = GetData(GYRO_ZOUT_H);
 //    dmp[0]=GetData(DMP_REG);
