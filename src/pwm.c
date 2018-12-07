@@ -24,8 +24,8 @@ void tim2_init(void){
 	TIM_TimeBaseInitTypeDef Tinit;
 	Tinit.TIM_ClockDivision=0;
 	Tinit.TIM_CounterMode=TIM_CounterMode_Up;
-	Tinit.TIM_Period=10-1;
-	Tinit.TIM_Prescaler=48000-1;
+	Tinit.TIM_Period=50-1;
+	Tinit.TIM_Prescaler=4800-1;
 	Tinit.TIM_RepetitionCounter=0;
 	TIM_TimeBaseInit(TIM2,&Tinit);
     TIM_ITConfig(TIM2,TIM_IT_Update,ENABLE);

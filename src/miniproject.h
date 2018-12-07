@@ -63,5 +63,8 @@ void kalman_filter(float, float , float *, float *);
 void GetAccGyro(void);
 int powerscale(int);
 void MPU6050_Init(void);
+void display1(const char *);
+void display2(const char *);
+void init_lcd();
 #endif
 
